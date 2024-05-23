@@ -1,0 +1,1106 @@
+---
+title: "Live Session 3"
+author: "Jason M. Graham"
+format: 
+  html:
+    echo: true
+    code-fold: false
+    code-summary: "Show the code"
+    toc: true
+    toc-location: left
+    self-contained: true
+bibliography: live_sessions.bib
+---
+
+```{r}
+#| inlcude: false
+#| message: false
+#| warning: false
+#| echo: false
+
+library(magick)
+library(forcats)
+library(patchwork)
+library(lubridate)
+library(cowplot)
+library(RColorBrewer)
+library(ggthemes)
+```
+
+## Overview
+
+In this session, we will cover:
+
+- Working with [projects](https://support.posit.co/hc/en-us/articles/200526207-Using-RStudio-Projects) in RStudio
+
+- Installing and using R packages
+
+
+- Methods for manipulating and cleaning tabular data stored as a data frame in R. Especially, we will focus on the [`dplyr`](https://dplyr.tidyverse.org/) package [@dplyr2023].
+
+- Further data types. 
+
+- Additional data visualization techniques and using the [`ggplot2`](https://ggplot2.tidyverse.org/) package [@ggplot2016].
+
+
+Everything covered in this session and the next is motivated by the anticipated needs for analyzing the data for the Janaagraha project.  
+
+Useful references/resources include:
+
+- [@grolemund2014hands] accessible [here](https://rstudio-education.github.io/hopr/)
+
+- [@wickham2023r] accessible [here](https://r4ds.hadley.nz/)
+
+- The [`swirl`](https://swirlstats.com/) package [@swirl2020]
+
+
+## Projects in RStudio
+
+### What is an RStudio Project?
+
+An RStudio project is a directory that contains an RStudio project file (with the extension `.Rproj`). Projects are a great way to keep your work organized. More importantly, projects make it easy to share your work with others in a way that facilitates reproducibility.
+
+To create a new project in RStudio, you can go to `File -> New Project...` and select the type of project you want to create. You can also create a new project by clicking on the `New Project` button in the toolbar. 
+
+When you create a new project, RStudio will create a new directory for your project and create a new `.Rproj` file in that directory. You can open the project by double-clicking on the `.Rproj` file in the directory or by going to `File -> Open Project...` and selecting the `.Rproj` file.
+
+When you open a project in RStudio, it will store the working directory for that project in the `.Rproj` file. This makes it easy to switch between projects and to keep the files for your data and analyses organized. Note that you can use the functions `getwd()` to print the current working directory. You can use the functions `list.dirs()` and `list.files()` to list the directories and files, respectively in the current working directory.
+
+More information on projects in RStudio can be found [here](https://support.posit.co/hc/en-us/articles/200526207-Using-RStudio-Projects).
+
+### Creating a New Project
+
+We will walk through the steps to create a new project in RStudio together.
+
+### Opening an Existing Project
+
+Let's download and open the project file I created for our live sessions. This project is available on GitHub [here](https://github.com/jmgraham30/r_demos_live_sessions)
+
+## Installing and Using R Packages
+
+### What are R Packages?
+
+Most of the functionality in R is provided by external packages. A package is a collection of functions, data sets, and other objects that are designed to work together to perform a specific task. There are thousands of packages available for R, and you can install them from the [Comprehensive R Archive Network](https://cran.r-project.org/) (CRAN) or from other sources.
+
+### Installing R Packages
+
+To install a package from CRAN, you can use the `install.packages()` function. For example, to install the `swirl` package, you can run the following command:
+
+```{r}
+#| eval: false
+#| code-fold: false
+
+install.packages("swirl")
+
+```
+
+Alternatively, you can use the Packages tab in RStudio to install packages. 
+
+### Some Useful Packages
+
+Some of the packages that we will introduce in this session are:
+
+- `dplyr` for data manipulation. This package contains functions that make it easy to manipulate tabular data stored as a data frame in R. For example, we can use `dplyr` functions to select columns, filter rows, group data, and summarize data.
+
+- `ggplot2` for data visualization. This package contains functions that make it easy to create a wide variety of plots and other visualizations in R. For example, we can use `ggplot2` functions to create scatter plots, bar plots, line plots, and more.
+
+Both of these packages are part of the [`tidyverse`](https://www.tidyverse.org/), which is a collection of packages that are designed to work together to make data analysis in R easier and more efficient.
+
+- [`janitor`](https://cran.r-project.org/web/packages/janitor/vignettes/janitor.html) for cleaning data. This package contains functions that make it easy to clean and tidy up data sets in R. For example, we can use `janitor` functions to remove duplicate rows, convert column names to snake_case, and convert data from wide to long format. 
+
+### Loading R Packages
+
+Once you have installed a package either using `install.packages()` or the Packages tab in RStudio, you can load the package into your R session using the `library()` function[^1].
+
+[^1]: Note that you only need to install a package once, but you need to load it into your R session each time you start a new R session.
+
+To get a little practice with this, let's go to the R console and install and load the `swirl` package. 
+
+### Packages for This Session
+
+Here we load some of the packages that will be used in this session:
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: false
+
+# load the packages
+library(tidyverse) # for data manipulation and visualization
+library(palmerpenguins) # for the penguins dataset
+library(janitor) # for cleaning data
+library(readxl) # for reading Excel files
+library(ggthemes) # for plot themes
+library(nycflights13) # for the flights dataset
+```
+
+
+Most R packages, especially ones installed from CRAN are well documented. You can access the documentation for a package by running `help(package="package_name")` in the R console. For example, to access the documentation for the `dplyr` package, you can run `help(package="dplyr")` in the R console. Once a package is loaded into an R session, you can pull up the documentation for a specific function by running `?function_name` in the R console. For example, to access the documentation for the `select()` function in the `dplyr` package, you can run `?select` in the R console.
+
+Many packages also have vignettes, which are long-form documentation that provide more detailed information on how to use the package. You can access the vignettes for a package by running `browseVignettes(package="package_name")` in the R console. For example, to access the vignettes for the `dplyr` package, you can run `browseVignettes(package="dplyr")` in the R console.
+
+## A Note on Data Types
+
+
+We refer to variables made up of quantitative information as **numerical** and variables made up of qualitative information as **categorical**. The type of variable(s) often influences the type of visualization or analysis that is used to explore or analyze data. 
+
+We can further classify the type of a variable by the following classifications:
+
+1. Numerical (quantitative):
+
+    * Continuous:  Can take on any value (possibly over a specific range) and any value between two values. Typically will involve decimal values. Physical measurements are common types of continuous numerical data. 
+    
+    * Discrete: Any numerical type that is not continuous. Often whole numbers. Counts are a common type of discrete numerical data.
+    
+2. Categorical (qualitative):
+
+    * Nominal: Lacks any particular ordering. For example, eyecolor would be nominal categorical data. 
+    
+    * Ordinal: Possesses a particular ordering. For example, the place (first, second, third, etc.) that a sports team comes in at the end of a competition or tournament. 
+    
+    * Binary: A categorical variable with only two possible outcomes. Think yes/no, true/false, etc. 
+    
+@fig-numericals illustrates numerical variables and the distinction between continuous and discrete numerical variables, while @fig-categoricals illustrates categorical variables and the distinction between nominal, ordinal, and binary categorical variables.  
+
+[![Numerical variables and the distinction between a continuous numerical variable and a discrete numerical variable. Artwork by Allison Horst](https://github.com/allisonhorst/stats-illustrations/blob/main/other-stats-artwork/continuous_discrete.png?raw=1){#fig-numericals fig-alt="An illustration of the distinction between a continuous numerical variable and a discrete numerical variable."}](https://allisonhorst.com/)
+
+
+[![ Categorical variables and the distinction between nominal, ordinal, and binary categorical variables. Artwork by Allison Horst](https://github.com/allisonhorst/stats-illustrations/blob/main/other-stats-artwork/nominal_ordinal_binary.png?raw=1){#fig-categoricals fig-alt="An illustration of the distinction between nominal, ordinal, and binary categorical variables."}](https://allisonhorst.com/)
+
+One thing to be careful about is that numbers can be and often are used to label the outcomes for a categorical variable. For example, suppose we collect data about students living in a particular dormitory. We may use 1 to denote that a student is enrolled as a first-year student, 2 to denote that a student is enrolled as a second-year student, etc. Even though we've used number, the year a student is enrolled as is really a categorical variable.     
+
+Sometimes, there may even be an ambiguity in the type for a variable. For example, suppose we are collecting data on commercial buildings in a particular city and for each building in the data set, we record (among other things) the number of stories of the building using 1 to denote a building with one story, 2 to denote a building with two stories, etc. On the one hand, we could view our stories variable as a count and hence a discrete numerical variable. On the other hand, it might be better to think of the stories variable as a ordinal categorical variable. One way to decide which is more appropriate is to think about if it makes sense or is desirable to take a average or not. If you want to take an average, then the variable must be numerical.     
+
+
+### Factors
+
+In R, a numerical variable is stored in a numeric vector, which you have already seen. We can also create character vectors which contain letters or words. Both numerical and character vectors are created using the concatenation function `c()`. On the other hand, R has a special data container called a **factor** that is used to represent categorical data. Factors are used to represent nominal, ordinal, and binary categorical data. For a factor, its **levels** are the unique values or categories that the variable can take on.
+
+Factors are useful because they allow us to specify the order of the levels of a categorical variable. This can be useful when we want to control the order in which the levels are displayed in plots or tables.
+
+Let's see some examples of how to create factors in R.
+
+```{r}
+
+# create a vector of categorical data
+categorical_data <- c("A", "B", "A", "C", "B", "C", "A", "B", "C", "A", "C", "C")
+
+# convert the vector to a factor
+factor_data <- factor(categorical_data)
+
+# print the factor
+print(factor_data)
+
+# get the levels of the factor
+levels(factor_data)
+
+```
+
+Let's call the `table` function on our factor:
+
+```{r}
+
+# get the frequency of each level of the factor
+table(factor_data)
+
+```
+
+Notice that this factor is not ordered which we can tell by using the following command:
+
+```{r}
+
+# check if the factor is ordered
+
+is.ordered(factor_data)
+
+```
+
+
+Let's make this an ordered factor:
+
+```{r}
+
+# convert the vector to an ordered factor
+
+ordered_factor_data <- factor(categorical_data, ordered = TRUE)
+
+# print the ordered factor
+
+print(ordered_factor_data)
+
+# check if the factor is ordered
+
+is.ordered(ordered_factor_data)
+
+
+```
+
+
+A nice feature of using factors is that they can keep track of the levels even if they are not present in the data. This can be useful when we want to ensure that the levels of a categorical variable are consistent across different data sets. For example,
+
+```{r}
+
+# create a vector of categorical data
+categorical_data <- c("A", "B", "A", "C", "B", "C", "A", "B", "C", "A", "C", "C")
+
+# convert the vector to a factor
+factor_data <- factor(categorical_data, levels = c("A", "B", "C", "D"))
+
+# print the factor
+
+print(factor_data)
+
+# get the levels of the factor
+
+levels(factor_data)
+
+```
+
+Let's see what happens when we use the `table` function on our factor:
+
+```{r}
+
+# get the frequency of each level of the factor
+
+table(factor_data)
+
+
+```
+
+This tells us that even though "D" is an option for an outcome, it is not present in the observed data.
+
+One thing to note is that depending on how the data is read into R, the data type of a column in a data frame corresponding to a categorical variable may be a character or a factor. If the data is read in as a character and it is desirable to represent it as a factor, we can convert it to a factor using the `as.factor()` function.
+
+## Manipulating Tabular Data
+
+Recall that in R we can store tabular data in a **data frame**. A data frame is a two-dimensional data structure that stores data in rows and columns. Each column in a data frame is a vector, and different columns can have different data types.
+
+### The Need for Data Manipulation
+
+A data set that satisfies the following properties 1 - 3 is said to be **tidy** or in tidy format:
+
+1. Each row corresponds to a unique observation.
+
+2. Each column is a unique feature or variable. 
+
+3. Every cell contains a single value.
+
+We will often find it very useful to work with data that conforms to the tidy format. However, data that we encounter in the real world is often not in tidy format. Thus, it is useful to be able to manipulate data to tidy it.
+
+Additionally, there may be inconsistencies in the data that we need to address. For example, there may be missing values, duplicate rows, or columns with inconsistent data types. Also, column names or the category names used to identify responses may be inconsistent or difficult to work with. 
+
+### The `dplyr` Package
+
+The `dplyr` package is a powerful package for data manipulation in R. It provides a set of functions that make it easy to manipulate tabular data stored as a data frame in R. Some of the key functions in the `dplyr` package include:
+
+- `filter()`: to select rows that meet certain criteria.
+
+- `select()`: to select columns.
+
+- `mutate()`: to create new columns.
+
+- `arrange()`: to sort rows.
+
+- `group_by()`: to group data by one or more variables.
+
+- `summarize()`: to summarize data.
+
+- `join()`: to combine data from two or more data frames.
+
+
+We will see several uses of the `dplyr` package for data manipulation below. 
+
+### Some Example Data
+
+Let's look at some example data, two local data sets that we will read in and the `penguins` data set from the `palmerpenguins` package.
+
+Read in the two local data sets:
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: false
+
+# use read_csv from readr package to read in the csv file
+csv_df <- read_csv("data/simulated_data.csv")
+# use read_xlsx from readxl package to read in the Excel file
+excel_df <- read_xlsx("data/diamonds_excel.xlsx")
+
+```
+
+**Exercise:** Read in some data of your choosing from your project. Make sure to add the data file(s) to the `data` folder in your project.
+
+The `glimpse` function is a useful function for getting a quick overview of a data frame. Let's use it now:
+
+```{r}
+glimpse(csv_df)
+```
+
+
+```{r}
+glimpse(excel_df)
+```
+
+
+```{r}
+glimpse(penguins)
+```
+
+
+The output from the `glimpse` function shows us the structure of the data frame, including the number of rows and columns, the names of the columns, and the data types of the columns.
+
+**Exercise:** Call the `glimpse` function on the data set you read in.
+
+The `skim` function from the `skimr` package is another useful function for getting a quick overview of a data frame. Let's use it now:
+
+```{r}
+skimr::skim(csv_df)
+```
+
+
+```{r}
+skimr::skim(excel_df)
+```
+
+
+```{r}
+skimr::skim(penguins)
+```
+
+The output from the `skim` function provides a summary of the data frame, including the number of observations, the number of variables, and the type of variables. It also provides summary statistics for each variable, such as the minimum, maximum, mean, and standard deviation. Importantly, it also provides information about missing values in each column.
+
+**Exercise:** Call the `skim` function on the data set you read in.
+
+### Cleaning Up Data
+
+One thing we observe about the data stored in the `excel_df` data frame is that the column names are not labeled with consistent capitalization. We can use the `janitor` package to clean up the column names. For example:
+
+```{r}
+
+# clean up the column names
+excel_df <- excel_df |>
+  clean_names()
+
+```
+
+Note that we have used the pipe operator (`|>`) to pass the data frame to the `clean_names` function. The pipe operator is a useful operator that allows us to chain together multiple operations in a more readable way. Let's `glimpse` the data again
+
+```{r}
+
+glimpse(excel_df)
+
+```
+
+It would also be nice to give more meaningful names to the `x`, `y`, and `z` columns. We can use the `rename` function from the `dplyr` package to rename these columns. For example:
+
+```{r}
+
+# rename the x, y, and z columns
+excel_df <- excel_df |>
+  rename("length_mm" = x, "width_mm" = y, "height_mm" = z)
+
+```
+
+
+Let's `glimpse` the data one more time
+
+```{r}
+
+glimpse(excel_df)
+
+```
+
+If we are happy with the changes we have made to the data, we can save the data frame. Now, let's save it as a `.csv` file since these are more common file types. To do so, we use the `write_csv` function from the `readr` package. For example:
+
+```{r}
+
+# save the data frame to a new csv file
+write_csv(excel_df, "data/cleaned_diamonds.csv")
+
+```
+
+
+### `r icons::icon_style(icons::fontawesome("r-project"),scale=2,fill="steelblue")` `dplyr` Basics
+
+
+In this section, we will illustrate some of the basic functionality of `dplyr` for manipulating tabular data.
+
+#### Selecting Columns
+
+Suppose we only want to work with the `carat` and `price` columns in our `excel_df` data frame. We can use the `select` function from the `dplyr` package to select these columns. For example:
+
+```{r}
+
+# select the carat and price columns
+excel_df |>
+  select(carat, price) |>
+  head()
+
+```
+
+
+As another illustration of using `select`, let's select all the columns except the `price` column:
+
+```{r}
+
+# select all columns except the price column
+excel_df |>
+  select(-price) |>
+  head()
+
+```
+
+#### Filtering Rows
+
+In the penguins data set, suppose I only want those measurements for penguins that are of the species `Adelie`. We can use the `filter` function from the `dplyr` package to filter the data. For example:
+
+```{r}
+
+# filter the data for Adelie penguins
+penguins |>
+  filter(species == "Adelie") |>
+  head()
+
+```
+
+As another example, suppose I want to filter out the missing values for the measurements of the penguins. We can use the `filter` function to do this. For example:
+
+```{r}
+
+# filter out missing values
+penguins |>
+  filter(!is.na(bill_length_mm)) |>
+  head()
+
+```
+
+#### Mutating Data
+
+Mutate allows us to create new columns or modify existing columns in a data frame. For example, suppose we want to standardize (subtract by the mean and divide by the standard deviation) the physical measurements of the penguincs. We can use the `mutate` function from the `dplyr` package to do this. For example:
+
+```{r}
+
+# standardize the physical measurements
+penguins |>
+  filter(!is.na(bill_length_mm)) |>
+  mutate(bill_length_mm_std = (bill_length_mm - mean(bill_length_mm)) / sd(bill_length_mm),
+         bill_depth_mm_std = (bill_depth_mm - mean(bill_depth_mm)) / sd(bill_depth_mm),
+         flipper_length_mm_std = (flipper_length_mm - mean(flipper_length_mm)) / sd(flipper_length_mm),
+         body_mass_g_std = (body_mass_g - mean(body_mass_g)) / sd(body_mass_g)) |>
+  glimpse()
+
+```
+
+Let's see another application of `mutate`.
+
+Notice that in our `csv_df` there is a column names `species` that is coded numerically:
+
+```{r}
+glimpse(csv_df)
+```
+
+We can use the `mutate` function from the `dplyr` package to recode this column. For example:
+
+```{r}
+
+# recode the species column
+csv_df <- csv_df |>
+  mutate(species_fct = case_when(
+    species == 1 ~ "robin",
+    species == 2 ~ "sparrow",
+    species == 3 ~ "warbler",
+    species == 4 ~ "raven",
+    species == 5 ~ "dove",
+    species == 6 ~ "loon",
+    species == 7 ~ "grackle",
+    species == 8 ~ "yellowthroat",
+    species == 9 ~ "hawk"
+  ),
+  species_fct = as_factor(species_fct))
+
+```
+
+Let's check our changes:
+
+```{r}
+
+glimpse(csv_df)
+
+```
+
+
+#### Grouping Data
+
+The `group_by` function allows us to group the data by a particular variable. However, `group_by` alone doesn't really do anything useful. It is typically used in conjunction with other functions like `summarise` to compute summary statistics for each group. For example, suppose we want to compute the average price for diamonds in our `excel_df` data frame by the particular cut. We can use the `group_by` function from the `dplyr` package to do this. For example:
+
+```{r}
+
+# compute the average price for each cut
+excel_df |>
+  group_by(cut) |>
+  summarise(avg_price = mean(price, na.rm = TRUE))
+
+```
+
+
+As another example, suppose we want to count the number of observations for each species in the `csv_df` data frame. We can use the `group_by` function from the `dplyr` package to do this. For example:
+
+
+```{r}
+
+csv_df |>
+  group_by(species_fct) |>
+  summarise(n = n())
+
+```
+
+Now I can combine the `group_by` and `summarise` with a mutate to obtain percentages such as:
+
+```{r}
+
+
+csv_df |>
+  group_by(species_fct) |>
+  summarise(n = n()) |>
+  mutate(percentages = n / sum(n) * 100)
+
+```
+
+
+As a brief aside, we note that there are R packages that can produce nicely formatted tables from the output of functions like `group_by` and `summarise` that produce data frames. For example, the [`gt`](https://gt.rstudio.com/index.html) package can be used to produce nicely formatted tables. For example, @tbl-percentages was created using the `gt` package. The code used is:
+
+```{r}
+#| label: tbl-percentages
+#| tbl-cap: Percentages of Species
+
+# install.packages("gt")
+library(gt)
+
+csv_df |>
+  group_by(species_fct) |>
+  summarise(n = n()) |>
+  mutate(percentages = n / sum(n) * 100) |>
+  arrange(desc(n)) |>
+  gt() |>
+  tab_header(title = "Percentages of Species") |>
+  cols_label(species_fct = "Species",
+             n = "Count",
+             percentages = "Percentages") 
+```
+
+
+For more on table formatting in R, see the articles [How to Make Beautiful Tables in R](https://rfortherestofus.com/2019/11/how-to-make-beautiful-tables-in-r) and [Top 7 Packages for Making Beautiful Tables in R](https://towardsdatascience.com/top-7-packages-for-making-beautiful-tables-in-r-7683d054e541). 
+
+#### Joining Data
+
+The `dplyr` package has functions that allow one to join two data frames into one. There are technically two general approaches: inner joins and outer joins. We will focus on outer joins because they make it explicit which rows are being kept in the final data frame. The three outer join functions are
+
+- `left_join(x, y, by = "key")`: Keep all rows from `x` and only those from `y` that match based on the key.
+
+- `right_join(x, y, by = "key")`: Keep all rows from `y` and only those from `x` that match based on the key.
+
+- `full_join(x, y, by = "key")`: Keep all rows from `x` and `y` and match them based on the key.
+
+
+We will illustrate the use of these outer join functions by using the data sets from the `nycflights13` package. The `flights` data set contains information about flights that departed from New York City in 2013. The `airlines` data set contains information about airlines. The `airports` data set contains information about airports. The `planes` data set contains information about planes. The `weather` data set contains information about the weather in New York City in 2013.
+
+
+Let's start by looking at what is in the `flights` data set:
+
+```{r}
+#| code-fold: true
+
+glimpse(flights)
+```
+
+
+We see that there are 336,776 rows of observations and 19 columns of variables. One of those columns is the carrier but the name is abbreviated. We can use the `airlines` data set to get the full name of the carrier. Let's look at what is in the `airlines` data set:
+
+```{r}
+#| code-fold: true
+
+glimpse(airlines)
+```
+ 
+ 
+Now, we can use a left join to add the full name of the carrier to the `flights` data set. For example:
+
+```{r}
+
+left_join(flights,airlines, by = "carrier") |>
+  glimpse()
+
+```
+
+This uses the `carrier` column as a key to match and results in the new column `name`. We could have used `right_join` instead to achieve the same thing:
+
+```{r}
+
+right_join(airlines,flights, by = "carrier") |>
+  glimpse()
+
+```
+
+Notice that we had to switch the order of the two data frames. 
+
+As another application of join, suppose we are interested to understand the impact of weather on flight delays. In particular, suppose we want to see how visibility impacts flight delays. We can use the `weather` data set to add weather information to the `flights` data set. However, this is a little tricky because we need to match the two data sets by time and location. 
+
+```{r}
+
+
+weather |> select(origin, time_hour, visib) |> 
+ right_join(flights, by = c("time_hour","origin")) |>
+  glimpse()
+
+```
+
+
+There is so much more that can be done with the `dplyr` package. We have only scratched the surface. For more information, see the [dplyr documentation](https://dplyr.tidyverse.org/) or [Chapter 3 of R for Data Science](https://r4ds.hadley.nz/data-transform).
+
+## Data Visualization
+
+### `r icons::icon_style(icons::fontawesome("r-project"),scale=2,fill="steelblue")` The `ggplot2` Package
+
+The `ggplot2` package implements the **grammar of graphics**, a coherent system for describing and building graphs. With `ggplot2`, you can do more and faster by learning one system and applying it in many places.
+
+@fig-ggplot2 shows the typical structure of the grammar of graphics as implemented in the `ggplot2` package[^2].
+
+```{r, out.width="100%", fig.retina = 2}
+#| label: fig-ggplot2
+#| fig-cap:  The basic ggplot2 syntax. Figure source [@timbers2022data].
+#| echo: false
+#| message: false
+#| warning: false
+image_read("https://www.dropbox.com/scl/fi/6i7wc0126kw9vr5mr0iuv/ggplot_function.jpeg?rlkey=t2exo2hodawi3y0kgtco0l2eo&dl=1") |>
+  image_crop("1625x1900")
+```
+
+[^2]: You can also use the pipe operator (`|>`) to input a data frame into the first argument for the `ggplot` function. 
+
+
+Before we dive further into the details of using `ggplot2` and see more examples, let's think about what kinds of plots or graphs we might want to make. 
+
+### Types of Plots
+
+There are many different types of plots one can make so there isn't necessarily a unique choice to be made when deciding how to visualize data. However, there are a few considerations that will have a strong influence on what type of plot(s) you might create to visualize some data. 
+
+Among the most important considerations is, the type of variable(s) involved in the parts of your data that you want to display visually. @tbl-basic-data-types lists the most common variable types. 
+
+---------------------------------------------------------------------------------------------------------------------
+Type of variable         Examples              Appropriate scale       Description
+------------------------ --------------------- ----------------------- ----------------------------------------------
+quantitative/numerical   1.3, 5.7, 83,         continuous              Arbitrary numerical values. These can be
+continuous               1.5x10^-2^                                    integers, rational numbers, or real numbers.
+ 
+quantitative/numerical   1, 2, 3, 4            discrete                Numbers in discrete units. These are most
+discrete                                                               commonly but not necessarily integers.
+                                                                       For example, the numbers 0.5, 1.0, 1.5 could
+                                                                       also be treated as discrete if intermediate
+                                                                       values cannot exist in the given dataset.
+ 
+qualitative/categorical  dog, cat, fish        discrete                Categories without order. These are discrete
+unordered                                                              and unique categories that have no inherent
+                                                                       order. These variables are
+                                                                       also called *factors*.
+                                                                       
+qualitative/categorical  good, fair, poor      discrete                Categories with order. These are discrete
+ordered                                                                and unique categories with an order. For
+                                                                       example, "fair" always lies between "good"
+                                                                       and "poor". These variables are
+                                                                       also called *ordered factors*.
+
+date or time             Jan. 5 2018, 8:03am   continuous or discrete  Specific days and/or times. Also
+                                                                       generic dates, such as July 4 or Dec. 25
+                                                                       (without year).
+
+text                     The quick brown fox   none, or discrete       Free-form text. Can be treated
+                         jumps over the lazy                           as categorical if needed.
+                         dog.
+---------------------------------------------------------------------------------------------------------------------
+
+: Types of variables encountered in typical data visualization scenarios, table from [@wilke2019fundamentals]. {#tbl-basic-data-types .striped .hover}
+
+The reason why data types such as those listed in @tbl-basic-data-types influence the type of plot(s) used to display data is because the data type of a variable determines what kind of **aesthetics** can be used in a plot.  
+
+By an aesthetic, we mean a visual element that can be used to describe aspects of a given graphic. @fig-common-aesthetics shows some common aesthetics for plots or graphs used in data visualization.  
+
+
+```{r}
+#| label: fig-common-aesthetics
+#| fig-cap: Common aesthetics
+#| echo: false
+#| message: false
+#| warning: false
+
+aes_pos <- ggdraw() + 
+  geom_segment(data = data.frame(x = c(0, 0.5),
+                                 xend = c(1, 0.5),
+                                 y = c(0.5, 0),
+                                 yend = c(0.5, 1)),
+                aes(x = x, y = y, xend = xend, yend = yend),
+                arrow = arrow(length = grid::unit(12, "pt")), linewidth = .75) +
+  draw_text("y", .5, 1, size = 12, vjust = 1, hjust = 2.5) +
+  draw_text("x", 1, .5, size = 12, vjust = 2, hjust = 1) + 
+  coord_cartesian(xlim = c(-.2, 1.2), ylim = c(-.2, 1.2))
+
+aes_color <- ggdraw() +
+  geom_tile(data = data.frame(x = 0.15 + .2333*(0:3)),
+            aes(x, y = .5, fill = factor(x)), width = .2, height = .6) + 
+  scale_fill_viridis_d()
+
+aes_shape <- ggdraw() +
+  geom_point(data = data.frame(x = (.5 + 0:3)/4),
+             aes(x, y = .5, shape = factor(x)), size = 8, fill = "grey80") +
+  scale_shape_manual(values = 21:24)
+
+aes_size <- ggdraw() +
+  geom_point(data = data.frame(x = (.5 + 0:3)/4),
+             aes(x, y = .5, size = factor(x)), shape = 21, fill = "grey80") +
+  scale_size_manual(values = c(2, 5, 8, 11))
+
+aes_lwd <- ggdraw() +
+  geom_segment(data = data.frame(x = rep(0.05, 4),
+                                 xend = rep(0.95, 4),
+                                 y = (1.5 + 0:3)/6,
+                                 yend = (1.5 + 0:3)/6,
+                                 linewidth = 4:1),
+               aes(x = x, y = y, xend = xend, yend = yend, linewidth = linewidth)) +
+  scale_size_identity()
+
+aes_ltp <- ggdraw() +
+  geom_segment(data = data.frame(x = rep(0.05, 4),
+                                 xend = rep(0.95, 4),
+                                 y = (1.5 + 0:3)/6,
+                                 yend = (1.5 + 0:3)/6,
+                                 linetype = 4:1),
+               aes(x = x, y = y, xend = xend, yend = yend, linetype = linetype), linewidth = 1) +
+  scale_linetype_identity()
+
+
+plot_grid(aes_pos, aes_shape, aes_size,
+          aes_color, aes_lwd, aes_ltp,
+          ncol = 3,
+          labels = c("position", "shape", "size", "color", "line width", "line type"),
+          label_x = 0.05, label_y = 0.95, hjust = 0, vjust = 1)
+```
+
+Returning to @fig-ggplot2, we notice that one of the arguments that must be given to `ggplot` is `aes` which is short for aesthetic. 
+
+@fig-plot-sketches shows several of the most common types of plots for a single or pair of variables. These plot types are:
+
+- **scatter plots** visualize the relationship between two quantitative variables,
+- **line plots** visualize trends with respect to an independent, ordered quantity (e.g., time),
+- **bar plots** visualize comparisons of amounts, and
+- **histograms** visualize the distribution of one quantitative variable (i.e., all its possible values and how often they occur)
+
+```{r}
+#| label: fig-plot-sketches
+#| fig-cap: Examples of scatter, line and bar plots, as well as histograms.
+#| fig-width: 4.5
+#| fig-height: 4.65
+#| echo: false
+
+set.seed(1)
+
+scatter_plot <- tibble(x = seq(0.25, 10, by = 0.5) + rnorm(20, 1, 1.5),
+                       y = seq(0.25, 10, by = 0.5) + rnorm(20, 1, 0.5)) |>
+  ggplot(aes(x = x, y = y)) +
+  geom_point() +
+  scale_x_continuous(limits = c(0, 12), breaks = seq(0, 12, by = 3)) +
+  scale_y_continuous(limits = c(0, 12), breaks = seq(0, 12, by = 3)) +
+  ggtitle("Scatter plot") +
+  theme_classic()
+
+line_plot <- tibble(x = seq(0.5, 10, by = 1) + rnorm(10, 1, 0.5),
+                       y = seq(0.5, 10, by = 1) + rnorm(10, 1, 0.1)) |>
+  ggplot(aes(x = x, y = y)) +
+  geom_line() +
+  scale_x_continuous(limits = c(0, 12), breaks = seq(0, 12, by = 3)) +
+  scale_y_continuous(limits = c(0, 12), breaks = seq(0, 12, by = 3)) +
+  ggtitle("Line plot") +
+  theme_classic()
+
+bar_plot <- tibble(count = c(35, 27, 21),
+                   category = as_factor(c("Group 1", "Group 2", "Group 3"))) |>
+  ggplot(aes(y = count, x = category)) +
+  geom_bar(stat = "identity") +
+  ggtitle("Bar plot") +
+  theme_classic()
+
+histogram_plot <- tibble(measurements = rnorm(200, 25, 5)) |>
+  ggplot(aes(x = measurements)) +
+  geom_histogram(binwidth = 3) +
+  ggtitle("Histogram") +
+  theme_classic()
+
+plot_grid(scatter_plot,
+          line_plot,
+          bar_plot,
+          histogram_plot,
+          ncol = 2, 
+          greedy = FALSE)
+```
+
+### Tips for Good Visualizations
+
+We will soon learn how to make these types of plots and more with `ggplot2`. Before that, here is a list of tips for making sure that our visualizations are good:
+
+- Make sure the visualization answers the question you have asked most simply and plainly as possible.
+- Use legends and labels so that your visualization is understandable without reading the surrounding text.
+- Ensure the text, symbols, lines, etc., on your visualization are big enough to be easily read.
+- Ensure the data are clearly visible; don't hide the shape/distribution of the data behind other objects (e.g.,  a bar).
+- Make sure to use color schemes that are easily visible by those with
+  colorblindness (a surprisingly large fraction of the overall 
+  population&mdash;from about 1% to 10%, depending on sex and ancestry [@deebblind]).
+  For example, [ColorBrewer](https://colorbrewer2.org) 
+  and [the `RColorBrewer` R package](https://cran.r-project.org/web/packages/RColorBrewer/index.html) [@RColorBrewer] provide the 
+  ability to pick such color schemes, and you can check your visualizations 
+  after you have created them by uploading to online tools
+  such as a [color blindness simulator](https://www.color-blindness.com/coblis-color-blindness-simulator/).
+- Redundancy can be helpful; sometimes conveying the same message in multiple ways reinforces it for the audience.
+- Use colors sparingly. Too many different colors can be distracting, create false patterns, and detract from the message. 
+- Be wary of overplotting. Overplotting is when marks that represent the data
+  overlap, and is problematic as it prevents you from seeing how many data
+  points are represented in areas of the visualization where this occurs. If your
+  plot has too many dots or lines and starts to look like a mess, you need to do
+  something different.
+- Only make the plot area (where the dots, lines, bars are) as big as needed. Simple plots can be made small.
+- Don't adjust the axes to zoom in on small differences. If the difference is small, show that it's small!
+
+
+If you're not sure what plot to make for your data, the [data-to-viz](https://www.data-to-viz.com/) website can be very helpful. [View the data-to-viz site](https://www.data-to-viz.com/). Once you know what type of plot to make, the [R Graph Gallery](https://r-graph-gallery.com/index.html) website is helpful for finding the code to make the plot with `ggplot2`. [View the R Graph Gallery ](https://r-graph-gallery.com/index.html)
+
+
+
+In the following sections, we illustrate some of the common plot types. 
+
+### Single Variables
+
+#### A Single Numeric Variable
+
+One way to visualize the distribution of a single numerical variable is to use a [histogram](). A histogram divides the range of the variable into bins and shows the number of observations in each bin. Here is how we can create a histogram:
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+
+penguins |>
+  ggplot(aes(x = body_mass_g)) +
+  geom_histogram() 
+```
+
+Note that plots created with `ggplot2` can be customized in many ways. For example, we can change the color of the bars, the number of bins, the plot theme add a title, and change the axis labels. 
+ 
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+
+penguins |>
+  ggplot(aes(x = body_mass_g)) +
+  geom_histogram(fill="steelblue",bins=50) +
+  theme_bw() +
+  labs(x = "Body mass (g)", y = "Count", title = "Histogram of body mass") 
+```
+
+
+Also, maybe it would be better to plot our data on the log scale. We can do this by adding `scale_x_log10()` to our plot:
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+
+penguins |>
+  ggplot(aes(x = body_mass_g)) +
+  geom_histogram(fill="steelblue",bins=30) +
+  scale_x_log10() +
+  theme_bw() +
+  labs(x = "Body mass (g)", y = "Count", title = "Histogram of body mass") 
+```
+
+#### A Single Categorical Variables
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+
+excel_df |>
+  ggplot(aes(x = color)) +
+  geom_bar() +
+  labs(x = "Color", y = "Count", title = "Diamonds by color")
+```
+
+
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+
+csv_df |>
+  group_by(species_fct) |>
+  summarise(n = n()) |>
+  mutate(prop = n / sum(n)) |>
+  ggplot(aes(x=reorder(species_fct,-n),y=n)) +
+  geom_col(fill = 'steelblue') +
+  geom_text(aes( label = scales::percent(prop),
+                 y= n ), vjust = -.5) +
+  labs(x = "Species", y = "Number of birds", title = "Species of birds") +
+  theme_bw(base_size = 13)
+
+
+```
+
+### Multiple Variables
+
+#### Two Numeric Variables
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+
+penguins |>
+  ggplot(aes(x = body_mass_g, y = flipper_length_mm)) +
+  geom_point(color="steelblue") +
+  labs(x = "Body mass (g)", y = "Flipper length (mm)", title = "Scatter plot of body mass and flipper length") 
+```
+
+
+
+
+
+
+#### A Categorical and a Numeric Variable
+
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+
+
+penguins |>
+  ggplot(aes(x = species, y = bill_length_mm, color=species)) +
+  geom_boxplot() +
+  labs(x = "Species", y = "Bill length (mm)", title = "Bill length by species") +
+  scale_color_colorblind() +
+  theme_bw(base_size = 13)
+```
+
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+
+
+penguins |>
+  ggplot(aes(x = species, y = bill_length_mm, color=species)) +
+  geom_boxplot() +
+  geom_jitter(width = 0.2,alpha=0.5) +
+  labs(x = "Species", y = "Bill length (mm)", title = "Bill length by species") +
+  scale_color_colorblind() +
+  theme_bw(base_size = 13)
+```
+
+#### Two Categorical Variables
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+
+
+col_vals <- c("F" = "darkgreen", "M" = "darkblue")
+
+csv_df |>
+  ggplot(aes(x = species_fct, fill = sex)) + 
+  geom_bar(position = "dodge", color="white") +
+  scale_fill_manual(values = col_vals) +
+  labs(x = "Species", y = "Number of birds", fill="Sex",title = "Sex by species") + 
+  theme_bw(base_size = 13)
+```
+
+
+#### More Complicated Plots
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+
+penguins |>
+  ggplot(aes(x = body_mass_g, y = flipper_length_mm)) +
+  geom_point(color="steelblue") +
+  geom_smooth(method = "lm") +
+  labs(x = "Body mass (g)", y = "Flipper length (mm)", title = "Scatter plot of body mass and flipper length") 
+```
+
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+
+penguins |>
+  ggplot(aes(x = body_mass_g, y = flipper_length_mm,color=species)) +
+  geom_point() +
+  scale_color_ptol() +
+  labs(x = "Body mass (g)", y = "Flipper length (mm)", title = "Scatter plot of body mass and flipper length") +
+  theme_bw(base_size = 13)
+```
+
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+
+penguins |>
+  ggplot(aes(x = body_mass_g, y = flipper_length_mm,color=species)) +
+  geom_point() +
+  scale_color_ptol() +
+  facet_wrap(~sex) +
+  labs(x = "Body mass (g)", y = "Flipper length (mm)", title = "Scatter plot of body mass and flipper length") +
+  theme_bw(base_size = 13)
+```
+
+
+There is so much more that can be done with the `ggplot2` package. We have only scratched the surface. For more information, see the [ggplot2 documentation](https://ggplot2.tidyverse.org/) or [Chapters 1, 9, 10, and  of R for Data Science](https://r4ds.hadley.nz/).
+
+## References
+
+::: {#refs}
+:::
+
+
+:::{.callout-tip collapse="true"}
+## Expand for Session Info
+```{r}
+#| echo: false
+
+
+library(sessioninfo)
+# save the session info as an object
+pkg_sesh <- session_info(pkgs = "attached")
+
+# get the quarto version
+quarto_version <- system("quarto --version", intern = TRUE)
+
+# inject the quarto info
+pkg_sesh$platform$quarto <- paste(
+  system("quarto --version", intern = TRUE), 
+  "@", 
+  quarto::quarto_path()
+  )
+
+# print it out
+pkg_sesh
+```
+
+:::

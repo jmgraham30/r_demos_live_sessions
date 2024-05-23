@@ -1,0 +1,408 @@
+---
+title: "Live Session 4"
+author: "Jason M. Graham"
+format: 
+  html:
+    echo: true
+    code-fold: false
+    code-summary: "Show the code"
+    toc: true
+    toc-location: left
+    self-contained: true
+bibliography: live_sessions.bib
+---
+
+
+
+## Overview
+
+In this session, we will go over some code used to perform some analyses on the sample survey data. Specifically, 
+
+1. For the question D2, "Which social group do you belong to?", we will create a simple frequency table along with percentages for a single option tick question.
+
+2. For the question D29, "What is the average monthly expenditure of your household on the following items?", we will check the sum column and use this to create categories for the total household expenditure.
+
+3. For the question E1, "Which of the following sources does your household use for cooking most of the time, including cooking food, making tea/coffee, boiling drinking water/milk?", we will create frequency tables along with percentages for a multiple option tick question + do a cut by household expenditure category.
+
+
+
+
+## Load Packages and Data
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: false
+
+# load the packages
+library(tidyverse) # for data manipulation and visualization
+library(readxl) # for reading Excel files
+library(gt) # for nicer tables
+
+# set plot theme (optional)
+theme_set(theme_minimal(base_size = 12))
+```
+
+
+### Initial Data 
+
+Read in the sample data set and clean the column names.
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: false
+
+maca_sample <- read_xlsx("data/MacA_sample data for R training.xlsx") |>
+  janitor::clean_names()
+
+```
+
+It's a good idea to check what we read in to make sure it looks like what we expect.
+
+```{r}
+glimpse(maca_sample)
+```
+
+Based on the sample analysis in R spreadsheet, it looks like we only need some of the columns. Let's select those columns and rename them for easier reference.
+
+```{r}
+maca_sample_select <- maca_sample |>
+  select(starts_with(c("a9","b2","b3d","d2","d29",
+                       "e1","f7","f9","f10","f11",
+                       "g1","g2","g4","g5","g7","g8","g9","g10"))) 
+```
+
+Again, let's check to make sure we have what we expect.
+
+```{r}
+glimpse(maca_sample_select)
+```
+
+
+If we want, we can save this data set for future use.
+
+```{r}
+#| eval: false
+
+write_csv(maca_sample_select, "data/maca_sample_select.csv")
+```
+
+
+## D2
+
+We want to create a frequency table for the question D2, "Which social group do you belong to?". First, let's see what the recorded socials groups are. 
+
+```{r}
+table(maca_sample_select$d2_which_social_group_do_you_belong_to)
+```
+
+Let's use the `mutate` function to recode the social groups into more general categories, and then use those categories to create our table. 
+
+
+```{r}
+D2_freq_table <- maca_sample_select |>
+  mutate(d2_simplified = 
+           fct_recode(d2_which_social_group_do_you_belong_to, 
+                      unknown = "Don't know/Not sure",
+                      general = "General/other/Forward Caste",
+                      none = "None of the above/Don't belong to a social group",
+                      OBC = "OBC",
+                      other = "Other (specify)",
+                      refused = "Refused",
+                      SC = "SC",
+                      ST = "ST")) |>
+  group_by(d2_simplified) |>
+  summarise(n = n()) |>
+  mutate(prop = n / sum(n))
+
+D2_freq_table
+```
+
+
+Now we can use `gt` to produce a nicer looking table. 
+
+```{r}
+D2_freq_table |>
+  arrange(desc(n)) |>
+  gt() |>
+  fmt_number(columns = c(n), decimals = 0) |>
+  fmt_percent(columns = c(prop), decimals = 2) |>
+  tab_header(title = "Social group of respondents") |>
+  cols_label(d2_simplified = "Social group",
+             n = "Number of respondents",
+             prop = "Percentage")
+```
+
+
+If desired, we can turn our table into a visualization. 
+
+```{r}
+D2_freq_table |>
+  ggplot(aes(x=reorder(d2_simplified,-n),y=n)) +
+  geom_col(fill = 'steelblue') +
+  geom_text(aes( label = scales::percent(prop),
+                 y= n ), vjust = -.8) +
+  labs(x = "Social group", y = "Number of respondents", title = "Social group of respondents") + 
+  ylim(c(0,2005))
+
+
+
+```
+
+## D29
+
+For the question D29, "What is the average monthly expenditure of your household on the following items?", we want to check the sum column and use this to create categories for the total household expenditure.
+
+First, we will check the sum. It's easier if we first select those columns that begin with "d29".
+
+```{r}
+# extract total column for comparison
+maca_sample_select_d_29 <- maca_sample_select |>
+  select(starts_with("d29"))
+```
+
+Let's check the result
+
+```{r}
+# check result
+glimpse(maca_sample_select_d_29)
+```
+
+Notice that one of these columns is categorical so we will need to take that into account when summing across the rows. Before that, let's separate out the total column.
+
+```{r}
+# extract total column for comparison
+maca_sample_select_d_29_total <- maca_sample_select_d_29 |>
+  select(contains("total"))
+
+# check result
+glimpse(maca_sample_select_d_29_total)
+```
+
+Now, let's extract the columns that we will sum up.
+
+```{r}
+# extract columns that are not total columns
+maca_sample_select_d_29_comps <- maca_sample_select_d_29 |>
+  select(-contains("total"),-contains("savings"))
+
+# check result
+glimpse(maca_sample_select_d_29_comps)
+```
+
+Now, we will use the `rowSums` function to total the columns. 
+
+```{r}
+# sum the columns that are not total columns
+maca_sample_select_d_29_comps_sum <- maca_sample_select_d_29_comps |>
+  mutate(my_total = round(rowSums(across(where(is.double)),na.rm = TRUE),2))  
+
+# check result
+glimpse(maca_sample_select_d_29_comps_sum)
+```
+
+
+Now we should compare the two.
+
+```{r}
+# compare the total columns
+total_comparisons <- cbind(maca_sample_select_d_29_total, maca_sample_select_d_29_comps_sum |> select(my_total))
+
+names(total_comparisons) <- c("total_expenditure_col","my_total")
+
+# check result
+head(total_comparisons)
+```
+
+Now we can see if the results are the same. We will use two ways, one with the function a comparison and returns true or false, and the other visual.
+
+```{r}
+tot_compare <- total_comparisons$total_expenditure_col == total_comparisons$my_total
+
+nrow(total_comparisons) - sum(tot_compare)
+```
+
+It looks like there is an issue in that `r nrow(total_comparisons) - sum(tot_compare)` rows do not match. Let's look at some of these rows where there  are issues
+
+```{r}
+total_comparisons[!tot_compare,] |> head()
+```
+
+Apparently, there are some values that are being rounded. Let's look at the plot before doing anything else.  
+
+
+```{r}
+# plot the comparison
+total_comparisons |>
+  ggplot(aes(x = total_expenditure_col, 
+             y = my_total)) +
+  geom_line() 
+```
+
+
+We have to decide if the rounding is acceptable or not. For now, let's proceed and compute the percentiles:
+
+```{r}
+quantile(total_comparisons$my_total, probs = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99))
+```
+
+
+```{r}
+quantile(total_comparisons$total_expenditure_col, 
+         probs = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99))
+```
+
+We obtained the same thing. Now we can create categories for the total household expenditure. 
+
+```{r}
+# Compute percentiles (10%, 20%, ..., 100%)
+percentile_values <- quantile(total_comparisons$my_total, probs = c(seq(0.0, 0.9, by = 0.1),0.99,1.0))
+
+# Create a categorical variable based on the percentiles
+total_comparisons$total_category <- cut(
+  total_comparisons$my_total,
+  breaks = percentile_values,
+  labels = paste0(c(0,seq(10, 90, by = 10),99), "th Percentile"),
+  include.lowest = TRUE,
+  right = FALSE,
+  ordered_result = TRUE
+)
+```
+
+Let's check the result
+
+```{r}
+head(total_comparisons,12)
+```
+
+Finally, let's combine the total household expenditure with the rest of the data.
+
+```{r}
+maca_sample_select_with_total_percentiles <- cbind(maca_sample_select, total_comparisons)
+```
+
+Let's check the result
+
+```{r}
+
+glimpse(maca_sample_select_with_total_percentiles)
+```
+
+
+## E1
+
+For the question E1, "Which of the following sources does your household use for cooking most of the time, including cooking food, making tea/coffee, boiling drinking water/milk?", we will create frequency tables along with percentages for a multiple option tick question + do a cut by household expenditure category.
+
+First, let's extract the columns that related to E1:
+
+```{r}
+# select columns that start with "e1"
+maca_sample_select_e_1 <- maca_sample_select |>
+  select(starts_with("e1"))
+
+# check result
+glimpse(maca_sample_select_e_1)
+```
+
+It will be convenient to shorten the column names. To do this, we need to extract from the original column names, the portion that is relevant for our question. The following code does this:
+
+```{r}
+original_col_names <- names(maca_sample_select_e_1)
+
+extract_col_category <- function(col_name) {
+  # extract the category from the column name
+  category <- gsub(".*\\milk_", "", col_name)
+  return(category)
+}
+
+# test function
+extract_col_category(original_col_names[1])
+```
+
+Now we can apply this function to all the column names:
+
+```{r}
+new_col_names <- map_vec(original_col_names, extract_col_category)
+
+names(maca_sample_select_e_1) <- new_col_names
+
+# check result
+glimpse(maca_sample_select_e_1)
+```
+
+Now we can create the frequency tables for each category:
+
+```{r}
+maca_sample_select_e_1_long <- maca_sample_select_e_1 |>
+  select(-other_specify_2) |>
+  pivot_longer(cols = everything(),
+               names_to = "category",
+               values_to = "use")
+
+
+e1_freq_table <- maca_sample_select_e_1_long |>
+  mutate(use_01 = ifelse(use == "Yes", 1, 0)) |>
+  group_by(category) |>
+  summarise(number=sum(use_01, na.rm=TRUE)) |>
+  mutate(prop = number / sum(number)) 
+
+e1_freq_table
+```
+
+Finally, we can combine the fuel use response with the total household expenditure category and cross-tabulate the results:
+
+```{r}
+
+maca_sample_select_e_1_long_expenditures <- cbind(maca_sample_select_e_1,
+                                     maca_sample_select_with_total_percentiles |> 
+                                       select(total_category)) |>
+  select(-other_specify_2) |>
+  pivot_longer(cols = -total_category,
+               names_to = "category",
+               values_to = "use")
+
+glimpse(maca_sample_select_e_1_long_expenditures)
+```
+
+Here is the cross-table:
+
+```{r}
+cross_tab_df <- maca_sample_select_e_1_long_expenditures |>
+  filter(use == "Yes") |>
+  group_by(total_category, category) 
+
+table(cross_tab_df$total_category, cross_tab_df$category)
+```
+
+## References
+
+::: {#refs}
+:::
+
+
+:::{.callout-tip collapse="true"}
+## Expand for Session Info
+```{r}
+#| echo: false
+
+
+library(sessioninfo)
+# save the session info as an object
+pkg_sesh <- session_info(pkgs = "attached")
+
+# get the quarto version
+quarto_version <- system("quarto --version", intern = TRUE)
+
+# inject the quarto info
+pkg_sesh$platform$quarto <- paste(
+  system("quarto --version", intern = TRUE), 
+  "@", 
+  quarto::quarto_path()
+  )
+
+# print it out
+pkg_sesh
+```
+
+:::
